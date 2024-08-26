@@ -1,5 +1,6 @@
 ﻿using HerosProject.Entity;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HerosProject.Controllers
@@ -134,8 +135,34 @@ namespace HerosProject.Controllers
               return BadRequest(ex.Message);
             
             }
-
             return Ok(images);
+        }
+
+        [HttpGet("Download/{procuctCode}")]
+        public async Task<IActionResult> DownloasLink(string procuctCode)
+        {
+            try
+            {
+                string Filepath = Getfilepath(procuctCode);
+                string Imagepath = Filepath+ "\\" + procuctCode+ ".png";
+                if (System.IO.File.Exists(Imagepath))
+                {
+                    MemoryStream memoryStream = new MemoryStream();
+                    using (FileStream fileStream = new FileStream(Imagepath, FileMode.Open))
+                    {
+                        await fileStream.CopyToAsync(memoryStream);
+                    }
+                    memoryStream.Position = 0;
+                    return File(memoryStream,"image/png",procuctCode + ".png");
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+            return Ok("test");
         }
 
 
