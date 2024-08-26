@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace HerosProject.Controllers
 {
@@ -16,14 +17,14 @@ namespace HerosProject.Controllers
         }
         //Upload single product
         [HttpPut("UploadProduct")]
-        public async Task<IActionResult> UploadIamge(IFormFile formFile,string productCode)
+        public async Task<IActionResult> UploadIamge(IFormFile formFile, string productCode)
         {
             APIResponse response = new APIResponse();
-            try{
+            try {
                 string filePath = Getfilepath(productCode);
                 if (!System.IO.Directory.Exists(filePath))
                 {
-                     System.IO.Directory.CreateDirectory(filePath);
+                    System.IO.Directory.CreateDirectory(filePath);
                 }
                 string imagepath = filePath + "\\" + productCode + ".png";
                 if (System.IO.File.Exists(imagepath))
@@ -35,13 +36,13 @@ namespace HerosProject.Controllers
                     await formFile.CopyToAsync(stream);
                     response.statucode = "200";
                     response.Result = "successed";
-                } ;
+                };
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                response.ErroMessage = ex.Message; 
+                response.ErroMessage = ex.Message;
             }
-           return Ok(response);
+            return Ok(response);
         }
 
         //Upload multiple product
@@ -49,16 +50,16 @@ namespace HerosProject.Controllers
         public async Task<IActionResult> UploadMultiple(IFormFileCollection filecolelntion, string productCode)
         {
             APIResponse response = new APIResponse();
-            int passcount =0; int Errorcount = 0; 
+            int passcount = 0; int Errorcount = 0;
             try
             {
                 string filepath = Getfilepath(productCode);
                 if (!System.IO.Directory.Exists(filepath))
                 {
-                    System.IO .Directory.CreateDirectory(filepath);
+                    System.IO.Directory.CreateDirectory(filepath);
                 }
 
-                foreach(var file in filecolelntion)
+                foreach (var file in filecolelntion)
                 {
                     string imagepath = filepath + "\\" + file.FileName;
                     if (System.IO.File.Exists(imagepath))
@@ -102,7 +103,7 @@ namespace HerosProject.Controllers
             }
             catch (Exception ex)
             {
-               
+
             }
             return Ok(ImageURL);
         }
@@ -132,8 +133,8 @@ namespace HerosProject.Controllers
                 }
             }
             catch (Exception ex) {
-              return BadRequest(ex.Message);
-            
+                return BadRequest(ex.Message);
+
             }
             return Ok(images);
         }
@@ -144,7 +145,7 @@ namespace HerosProject.Controllers
             try
             {
                 string Filepath = Getfilepath(procuctCode);
-                string Imagepath = Filepath+ "\\" + procuctCode+ ".png";
+                string Imagepath = Filepath + "\\" + procuctCode + ".png";
                 if (System.IO.File.Exists(Imagepath))
                 {
                     MemoryStream memoryStream = new MemoryStream();
@@ -153,7 +154,7 @@ namespace HerosProject.Controllers
                         await fileStream.CopyToAsync(memoryStream);
                     }
                     memoryStream.Position = 0;
-                    return File(memoryStream,"image/png",procuctCode + ".png");
+                    return File(memoryStream, "image/png", procuctCode + ".png");
                 }
 
             }
@@ -163,6 +164,57 @@ namespace HerosProject.Controllers
             }
 
             return Ok("test");
+        }
+
+        [HttpDelete]
+        [Route("RemoveMultiple")]
+        public async Task<IActionResult> DeletePicture(string procuctCode)
+        {
+            try
+            {
+                string Filepath = Getfilepath(procuctCode);
+                string Imagepath = Filepath + "\\" + procuctCode + ".png";
+                DirectoryInfo DirectoryInfo = new DirectoryInfo(Filepath);
+                FileInfo[] fileInfos = DirectoryInfo.GetFiles();
+                foreach (FileInfo file in fileInfos)
+                {
+                    string fileName = file.Name;
+                    string filepath = Filepath + "\\" + fileName;
+                    if (System.IO.File.Exists(filepath))
+                    {
+                        System.IO.File.Delete(filepath);
+                    }
+                }
+                Ok("Deletes Successfully");
+
+            }
+            catch(Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
+            return Ok();
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> RemoveMultiple(string procuctCode)
+        {
+            try
+            {
+                string Filepath = Getfilepath(procuctCode);
+                string Imagepath = Filepath + "\\" + procuctCode + ".png";
+                if (System.IO.File.Exists(Imagepath))
+                {
+                    System.IO.File.Delete(Imagepath);
+
+                    return Ok(Imagepath + "Delete successfully");
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
+            return Ok();
         }
 
 
