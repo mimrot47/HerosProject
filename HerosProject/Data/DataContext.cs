@@ -12,5 +12,11 @@ namespace HerosProject.Data
         public DbSet<User> users { get; set; }
 
        public DbSet<RefreshToken> refreshtokens { get; set; }
+
+        public DbSet<ProductImage> productImages { get; set; }
+
+        public DbSet<products> products { get; set; }
+
+
     }
 }

@@ -1,4 +1,5 @@
-﻿using HerosProject.Entity;
+﻿using HerosProject.Data;
+using HerosProject.Entity;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -11,9 +12,11 @@ namespace HerosProject.Controllers
     public class ProductController : ControllerBase
     {
         private readonly IWebHostEnvironment _webHostEnvironment;
-        public ProductController(IWebHostEnvironment webHostEnvironment)
+        private readonly DataContext _dataContext;
+        public ProductController(IWebHostEnvironment webHostEnvironment,DataContext dataContext)
         {
             _webHostEnvironment = webHostEnvironment;
+            _dataContext = dataContext;
         }
         //Upload single product
         [HttpPut("UploadProduct")]
@@ -195,6 +198,40 @@ namespace HerosProject.Controllers
             return Ok();
         }
 
+        //Upload multiple product
+        [HttpPut("DBUploadMultipple/{productCode}")]
+        public async Task<IActionResult> DBUploadMultiple(IFormFileCollection filecolelntion, string productCode)
+        {
+            APIResponse response = new APIResponse();
+            int passcount = 0; int Errorcount = 0;
+            try
+            {
+                foreach (var file in filecolelntion)
+                {
+                  
+                    using (MemoryStream stream = new MemoryStream())
+                    {
+                        await file.CopyToAsync(stream);
+                        _dataContext.productImages.AddAsync(new ProductImage
+                        {
+                            ProductCode = productCode,
+                            productName = stream.ToArray()
+                        });
+                        passcount++;
+                        _dataContext.SaveChangesAsync();
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                Errorcount++;
+                response.ErroMessage = ex.Message;
+            }
+            response.statucode = "200";
+            response.Result = "Passcount " + passcount + " ErrorCount " + Errorcount;
+            return Ok(response);
+        }
+
         [HttpDelete]
         public async Task<IActionResult> RemoveMultiple(string procuctCode)
         {
@@ -216,6 +253,79 @@ namespace HerosProject.Controllers
             }
             return Ok();
         }
+
+        //Upload single product
+        [HttpPut("DBUploadProduct")]
+        public async Task<IActionResult> DBUploadIamge(IFormFile formFile, string productCode)
+        {
+            APIResponse response = new APIResponse();
+            try
+            {
+                using ( MemoryStream stream = new MemoryStream())
+                {
+                    await formFile.CopyToAsync(stream);
+                    _dataContext.productImages.AddAsync(new ProductImage
+                    {
+                        ProductCode = productCode,
+                        productName = stream.ToArray()
+                    });
+                     await _dataContext.SaveChangesAsync();
+                    response.statucode = "200";
+                    response.Result = "successed";
+                };
+            }
+            catch (Exception ex)
+            {
+                response.ErroMessage = ex.Message;
+            }
+            return Ok(response);
+        }
+
+        //Download from database
+        [HttpGet("GetImageDownload")]
+        public async Task<IActionResult> DBdownload(string productCode)
+        {
+            List<string> Image  = new List<string>();
+            try
+            {
+                var result = _dataContext.productImages.Where(x => x.ProductCode==productCode).ToList();
+                if(result != null)
+                {
+                    foreach (var item in result)
+                    {
+                        Image.Add(Convert.ToBase64String(item.productName));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
+            return Ok(Image);
+        }
+
+        [HttpGet("DBDownloadFile")]
+        public async Task<IActionResult> DbDownloadFile(string productCode)
+        {
+            try
+            {
+                var result = _dataContext.productImages.FirstOrDefault(x => x.ProductCode == productCode);
+                if (result != null)
+                {
+                    return File(result.productName,"image/png", productCode);
+                }
+
+            }
+            catch (Exception ex) { 
+            
+                return NotFound(ex.Message);
+            }
+
+            return Ok();
+
+        }
+
+
 
 
         [NonAction]
