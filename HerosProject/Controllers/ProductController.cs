@@ -104,7 +104,38 @@ namespace HerosProject.Controllers
                
             }
             return Ok(ImageURL);
+        }
 
+        [HttpGet("SetOfProduct/{productCode}")]
+        public async Task<IActionResult> ReturnSetOfImages(string productCode)
+        {
+            List<string> images = new List<string>();
+            string HostUrl = $"{this.Request.Scheme}://{this.Request.Host}{this.Request.PathBase}";
+            try
+            {
+                string FilePath = Getfilepath(productCode);
+                if (System.IO.Directory.Exists(FilePath))
+                {
+                    DirectoryInfo DirectoryInfo = new DirectoryInfo(FilePath);
+                    FileInfo[] fileInfos = DirectoryInfo.GetFiles();
+                    foreach (FileInfo file in fileInfos)
+                    {
+                        string fileName = file.Name;
+                        string filepath = FilePath + "\\" + fileName;
+                        if (System.IO.File.Exists(filepath))
+                        {
+                            string ImageURL = HostUrl + "\\upload\\product\\" + productCode + "/" + fileName;
+                            images.Add(ImageURL);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex) {
+              return BadRequest(ex.Message);
+            
+            }
+
+            return Ok(images);
         }
 
 
